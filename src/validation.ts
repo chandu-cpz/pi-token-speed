@@ -2,6 +2,7 @@ import type {
   CountStrategy,
   DisplayMode,
   EndTpsBehavior,
+  RenderMode,
   TokenSpeedConfig,
 } from "./config-types";
 import { MAX_SLIDING_WINDOW, MIN_SLIDING_WINDOW } from "./constants";
@@ -13,6 +14,7 @@ import {
   COUNT_STRATEGY,
   DISPLAY_MODE,
   END_TPS_BEHAVIOR,
+  RENDER_MODE,
   SLIDING_WINDOW,
   TPS_THRESHOLD_BLAZING,
   TPS_THRESHOLD_FAST,
@@ -24,6 +26,7 @@ import {
   COUNT_STRATEGY_LABELS,
   DISPLAY_LABELS,
   END_TPS_BEHAVIOR_LABELS,
+  RENDER_MODE_LABELS,
 } from "./options";
 
 /**
@@ -45,6 +48,7 @@ export class Validator {
 
     // Correct values with defaults where applicable
     response.display = this.checkDisplayMode(config.display, errors);
+    response.renderMode = this.checkRenderMode(config.renderMode, errors);
     response.countStrategy = this.checkCountStrategy(
       config.countStrategy,
       errors,
@@ -169,6 +173,27 @@ export class Validator {
     );
 
     return DISPLAY_MODE;
+  }
+
+  /**
+   * Checks that renderMode is a recognized value, defaulting if invalid.
+   *
+   * @param value The render mode value to check.
+   * @param errors The shared errors array to push to if invalid.
+   * @returns The validated (or defaulted) render mode.
+   */
+  private static checkRenderMode(
+    value: string,
+    errors: string[],
+  ): RenderMode {
+    if (Object.keys(RENDER_MODE_LABELS).includes(value))
+      return value as RenderMode;
+
+    errors.push(
+      `- Invalid renderMode "${value}" — defaulting to "${RENDER_MODE}".`,
+    );
+
+    return RENDER_MODE;
   }
 
   /**

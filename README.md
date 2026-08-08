@@ -51,6 +51,7 @@ You can customize the display, speed thresholds and colors by adding a `tokenSpe
     "colorBlazing": "#44ddff",
     "slidingWindow": 1000,
     "display": "tps",
+    "renderMode": "status",
     "useProviderTokens": false,
     "countStrategy": "direct",
     "endTpsBehavior": "average"
@@ -76,6 +77,7 @@ Invalid configuration values are automatically corrected to their defaults. A wa
 | `colorBlazing`      | string                         | `"#44ddff"` | Color for blazing tier                                           |
 | `slidingWindow`     | number                         | `1000`      | Sliding window duration in ms                                    |
 | `display`           | `tps`, `ttft`, `stats`, `full` | `tps`       | Display mode (see below)                                         |
+| `renderMode`        | `status`, `inline`             | `status`    | Where to render: separate status line, or inline in the stats line |
 | `useProviderTokens` | boolean                        | `false`     | Opt-in: use provider-reported count instead of the extension one |
 | `countStrategy`     | `estimate`, `direct`           | `direct`    | Token counting strategy used by the extension's own counter      |
 | `endTpsBehavior`    | `average`, `last`              | `average`   | What to show after streaming ends                                |

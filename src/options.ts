@@ -2,6 +2,7 @@ import type {
   CountStrategy,
   DisplayMode,
   EndTpsBehavior,
+  RenderMode,
 } from "./config-types";
 
 /**
@@ -12,6 +13,14 @@ export const DISPLAY_LABELS: Record<DisplayMode, string> = {
   ttft: "TTFT only",
   stats: "Token stats",
   full: "Full details",
+};
+
+/**
+ * Human-readable labels for render mode values.
+ */
+export const RENDER_MODE_LABELS: Record<RenderMode, string> = {
+  status: "Status line (default)",
+  inline: "Inline in stats line",
 };
 
 /**

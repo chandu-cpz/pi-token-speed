@@ -4,6 +4,13 @@
 export type DisplayMode = "tps" | "ttft" | "stats" | "full";
 
 /**
+ * Where to render the TPS meter:
+ * - `status`: separate status line in the footer (default, current behavior)
+ * - `inline`: appended to pi's built-in stats line (e.g. after `8.7%/1.0M (auto)`)
+ */
+export type RenderMode = "status" | "inline";
+
+/**
  * Count strategy — how to count tokens during streaming.
  */
 export type CountStrategy = "estimate" | "direct";
@@ -19,6 +26,7 @@ export type EndTpsBehavior = "average" | "last";
  */
 export interface TokenSpeedConfig {
   display: DisplayMode;
+  renderMode: RenderMode;
   tpsSlow: number;
   tpsMedium: number;
   tpsFast: number;

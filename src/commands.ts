@@ -5,6 +5,7 @@ import type {
   CountStrategy,
   DisplayMode,
   EndTpsBehavior,
+  RenderMode,
   TokenSpeedConfig,
 } from "./config-types";
 import { TokenSpeedEngine } from "./engine";
@@ -12,6 +13,7 @@ import {
   COUNT_STRATEGY_LABELS,
   DISPLAY_LABELS,
   END_TPS_BEHAVIOR_LABELS,
+  RENDER_MODE_LABELS,
   TOGGLE_LABELS,
 } from "./options";
 import type { Renderer } from "./renderer";
@@ -22,6 +24,7 @@ import { settings } from "./settings";
  */
 enum Options {
   DISPLAY = "display",
+  RENDER_MODE = "renderMode",
   USE_PROVIDER_TOKENS = "useProviderTokens",
   COUNT_STRATEGY = "countStrategy",
   END_TPS_BEHAVIOR = "endTpsBehavior",
@@ -69,6 +72,8 @@ export class CommandManager {
   ): Promise<void> {
     if (id === Options.DISPLAY) {
       await settings.setConfig({ display: newValue as DisplayMode });
+    } else if (id === Options.RENDER_MODE) {
+      await settings.setConfig({ renderMode: newValue as RenderMode });
     } else if (id === Options.USE_PROVIDER_TOKENS) {
       await settings.setConfig({ useProviderTokens: newValue === "on" });
     } else if (id === Options.COUNT_STRATEGY) {
@@ -83,7 +88,7 @@ export class CommandManager {
 
     // Re-render with the latest config
     this.engine.initialize();
-    this.renderer.update(ctx);
+    this.renderer.applyMode(ctx);
   }
 
   /**
@@ -122,6 +127,14 @@ export class CommandManager {
         description: "Level of detail to show in the status bar",
         currentValue: config.display,
         values: Object.keys(DISPLAY_LABELS) as DisplayMode[],
+      },
+      {
+        id: Options.RENDER_MODE,
+        label: "Placement",
+        description:
+          "Status line (separate footer row) vs inline in the stats line",
+        currentValue: config.renderMode,
+        values: Object.keys(RENDER_MODE_LABELS) as RenderMode[],
       },
       {
         id: Options.USE_PROVIDER_TOKENS,

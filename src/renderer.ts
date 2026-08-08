@@ -2,13 +2,24 @@ import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { DisplayMode, type TokenSpeedConfig } from "./config-types";
 import { STATUS_KEY } from "./constants";
 import { TokenSpeedEngine } from "./engine";
+import { createInlineFooter, readAutoCompact } from "./footer";
 import { settings } from "./settings";
 import { Validator } from "./validation";
 
 /**
- * Renderer for the token-speed status bar.
+ * Renderer for the token-speed meter.
+ *
+ * Two render modes (config `renderMode`):
+ * - `status` (default): updates a status-bar entry via `ctx.ui.setStatus`
+ * - `inline`: replaces the footer with a faithful copy of pi's built-in
+ *   footer that appends the TPS meter to the stats line, right after the
+ *   context usage block.
  */
 export class Renderer {
+  private ctx: ExtensionContext | null = null;
+  private tui: { requestRender(force?: boolean): void } | null = null;
+  private autoCompact = true;
+
   /**
    * Creates a new Renderer bound to an engine.
    */
@@ -83,22 +94,88 @@ export class Renderer {
   }
 
   /**
+   * Builds the compact TPS segment shown inline in the footer's stats line.
+   * Hidden before the first stream so the stats line stays clean.
+   *
+   * @returns The colored segment (with a leading space), or "" to hide it.
+   */
+  private buildInlineSegment(): string {
+    const theme = this.ctx?.ui.theme;
+    if (!theme) return "";
+
+    const { tps } = this.engine;
+    const hasData =
+      tps > 0 || this.engine.isStreaming || this.engine.tokenCount > 0;
+    if (!hasData) return "";
+
+    const measurement = tps > 0 ? `${tps.toFixed(1)} tok/s` : "-- tok/s";
+    const color = this.getColor(settings.getConfig(), tps);
+    const displayValue = this.colorHex(measurement, color);
+
+    return ` ${theme.fg("dim", "⚡")} ${displayValue}`;
+  }
+
+  /**
    * Renders the first-run placeholder in the status bar.
    *
    * @param ctx The context used by Pi.
    */
   initialize(ctx: ExtensionContext): void {
-    const theme = ctx.ui.theme;
-    const text = `${theme.fg("dim", "⚡ TPS:")} --`;
-    ctx.ui.setStatus(STATUS_KEY, text);
+    this.ctx = ctx;
+    this.autoCompact = readAutoCompact(ctx.cwd);
+    this.applyMode(ctx);
   }
 
   /**
-   * Updates the status bar with the given context.
+   * Applies the configured render mode:
+   * - `status`: restores the built-in footer and drives the status bar entry.
+   * - `inline`: installs the footer copy with the TPS segment in the stats line.
+   *
+   * @param ctx The context used by Pi.
+   */
+  applyMode(ctx: ExtensionContext): void {
+    this.ctx = ctx;
+    this.autoCompact = readAutoCompact(ctx.cwd);
+
+    const config = settings.getConfig();
+
+    if (config.renderMode === "inline") {
+      // Never show the separate status entry while inline is active.
+      ctx.ui.setStatus(STATUS_KEY, undefined);
+      ctx.ui.setFooter((tui, theme, footerData) => {
+        this.tui = tui as { requestRender(force?: boolean): void };
+        return createInlineFooter({
+          theme: theme as unknown as Parameters<typeof createInlineFooter>[0]["theme"],
+          footerData,
+          engine: this.engine,
+          getCtx: () => this.ctx,
+          getTpsSegment: () => this.buildInlineSegment(),
+          autoCompact: this.autoCompact,
+        });
+      });
+      this.tui?.requestRender();
+      return;
+    }
+
+    // Status mode: restore the built-in footer and render via status entry.
+    ctx.ui.setFooter(undefined);
+    this.update(ctx);
+  }
+
+  /**
+   * Updates the meter with the given context.
    *
    * @param ctx The context used by Pi.
    */
   update(ctx: ExtensionContext): void {
+    this.ctx = ctx;
+
+    if (settings.getConfig().renderMode === "inline") {
+      // The footer component reads the engine on every frame.
+      this.tui?.requestRender();
+      return;
+    }
+
     const config = settings.getConfig();
     const theme = ctx.ui.theme;
 

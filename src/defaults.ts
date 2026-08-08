@@ -2,6 +2,7 @@ import type {
   CountStrategy,
   DisplayMode,
   EndTpsBehavior,
+  RenderMode,
 } from "./config-types";
 
 /**
@@ -54,6 +55,11 @@ export const SLIDING_WINDOW = 1000;
  * Display mode for the extension
  */
 export const DISPLAY_MODE: DisplayMode = "tps";
+
+/**
+ * Where to render the TPS meter (status line vs inline in the stats line)
+ */
+export const RENDER_MODE: RenderMode = "status";
 
 /**
  * Selection for extension vs provider's counter
