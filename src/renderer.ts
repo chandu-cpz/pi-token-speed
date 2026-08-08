@@ -2,7 +2,7 @@ import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { DisplayMode, type TokenSpeedConfig } from "./config-types";
 import { STATUS_KEY } from "./constants";
 import { TokenSpeedEngine } from "./engine";
-import { createInlineFooter, readAutoCompact } from "./footer";
+import { createInlineFooter, readAutoCompact, type ThemeLike } from "./footer";
 import { settings } from "./settings";
 import { Validator } from "./validation";
 
@@ -94,6 +94,28 @@ export class Renderer {
   }
 
   /**
+   * Builds the suffix shown after the inline TPS measurement,
+   * mirroring `buildSuffix` for the status bar.
+   *
+   * @param display Display mode to check against
+   * @returns The suffix to append (may be empty).
+   */
+  private buildInlineSuffix(display: DisplayMode): string {
+    const { ttft, tokenCount: tokens, elapsedSeconds: elapsed } = this.engine;
+
+    switch (display) {
+      case "tps":
+        return "";
+      case "ttft":
+        return ` · TTFT: ${ttft} ms`;
+      case "stats":
+        return ` · ${this.formatStats(tokens, elapsed)}`;
+      case "full":
+        return ` · ${this.formatStats(tokens, elapsed)} · TTFT: ${ttft} ms`;
+    }
+  }
+
+  /**
    * Builds the compact TPS segment shown inline in the footer's stats line.
    * Hidden before the first stream so the stats line stays clean.
    *
@@ -103,16 +125,17 @@ export class Renderer {
     const theme = this.ctx?.ui.theme;
     if (!theme) return "";
 
+    const config = settings.getConfig();
     const { tps } = this.engine;
-    const hasData =
-      tps > 0 || this.engine.isStreaming || this.engine.tokenCount > 0;
+    const hasData = tps > 0 || this.engine.isStreaming;
     if (!hasData) return "";
 
     const measurement = tps > 0 ? `${tps.toFixed(1)} tok/s` : "-- tok/s";
-    const color = this.getColor(settings.getConfig(), tps);
+    const color = this.getColor(config, tps);
     const displayValue = this.colorHex(measurement, color);
+    const suffix = this.buildInlineSuffix(config.display);
 
-    return ` ${theme.fg("dim", "⚡")} ${displayValue}`;
+    return ` ${theme.fg("dim", "⚡")} ${displayValue}${theme.fg("dim", suffix)}`;
   }
 
   /**
@@ -145,7 +168,7 @@ export class Renderer {
       ctx.ui.setFooter((tui, theme, footerData) => {
         this.tui = tui as { requestRender(force?: boolean): void };
         return createInlineFooter({
-          theme: theme as unknown as Parameters<typeof createInlineFooter>[0]["theme"],
+          theme: theme as unknown as ThemeLike,
           footerData,
           engine: this.engine,
           getCtx: () => this.ctx,

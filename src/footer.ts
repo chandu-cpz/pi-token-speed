@@ -10,7 +10,7 @@ import type { TokenSpeedEngine } from "./engine";
 /**
  * Structural subset of pi's Theme used by the footer renderer.
  */
-interface ThemeLike {
+export interface ThemeLike {
   fg(color: string, text: string): string;
 }
 
@@ -116,7 +116,7 @@ export function createInlineFooter(deps: InlineFooterDeps): InlineFooter {
       // Cumulative usage from ALL session entries (mirrors pi's built-in).
       const totals = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, cost: 0 };
       let latestCacheHitRate: number | undefined;
-      for (const entry of session.getBranch()) {
+      for (const entry of session.getEntries()) {
         if (entry.type === "message" && entry.message.role === "assistant") {
           const u = entry.message.usage;
           totals.input += u.input;
