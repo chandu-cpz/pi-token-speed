@@ -101,11 +101,11 @@ export class EventManager {
       const toolCall = ev.partial?.content?.[ev.contentIndex ?? 0];
       if (toolCall?.type !== "toolCall") return;
 
-      // Only edit/write tools are counted (token generation, relevant)
-      if (this.isTokenGenerationTool(toolCall)) {
-        this.engine.recordDelta(ev.delta ?? "", ev.partial?.usage?.output);
-        this.renderer.update(ctx);
-      }
+      // Count ALL toolcall deltas for live TPS — previous filter (edit/write only)
+      // hid the meter for tool-heavy models like muse-spark-contributor (mostly
+      // bash/read). Provider bills output tokens for every toolCall regardless.
+      this.engine.recordDelta(ev.delta ?? "", ev.partial?.usage?.output);
+      this.renderer.update(ctx);
     }
 
     if (ev.type === "toolcall_end") {

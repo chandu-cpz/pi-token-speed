@@ -67,10 +67,15 @@ export class TokenSpeedEngine {
     }
 
     // Fallback: estimate or direct counting
+    // FIX: `direct` counted 1/delta — opencode-go batches huge deltas (Spark is
+    // fast), so direct undercounted by 10-50x and live TPS stayed at -- or ~2.
+    // Now direct still counts 1 for tiny deltas but uses estimate when batched.
     if (this._countStrategy === "estimate") {
       this.recordTokens(this.estimateTokens(delta));
     } else {
-      this.recordTokens(1);
+      const est = this.estimateTokens(delta);
+      // If delta clearly contains multiple tokens, respect its size even in direct mode
+      this.recordTokens(est > 1 ? est : 1);
     }
   }
 
